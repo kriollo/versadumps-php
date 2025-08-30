@@ -6,7 +6,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class Init
 {
-    public static function run()
+    public static function run(): void
     {
         $configFile = getcwd() . '/versadumps.yml';
 

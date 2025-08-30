@@ -2,38 +2,27 @@
 
 declare(strict_types=1);
 
-use Rector\Config\RectorConfig;
-use Rector\Set\ValueObject\LevelSetList;
-use Rector\Set\ValueObject\SetList;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
-return static function (RectorConfig $rectorConfig): void {
-    $rectorConfig->paths([
+return static function (ContainerConfigurator $containerConfigurator): void {
+    $parameters = $containerConfigurator->parameters();
+
+    $parameters->set('paths', [
         __DIR__ . '/src',
         __DIR__ . '/bin',
         __DIR__ . '/example',
     ]);
 
-    // Ignorar vendor y cache
-    $rectorConfig->skip([
+    $parameters->set('skip', [
         __DIR__ . '/vendor',
         __DIR__ . '/var',
         __DIR__ . '/app/cache',
     ]);
 
-    // === BASE RULES ===
-    $rectorConfig->sets([
-        LevelSetList::UP_TO_PHP_80,   // migración progresiva hasta PHP 8.0
-        SetList::CODE_QUALITY,        // incluye declare(strict_types=1)
-        SetList::TYPE_DECLARATION,    // agrega tipos a funciones/props donde se puede
-    ]);
+    // Import sets
+    $containerConfigurator->import(__DIR__ . '/vendor/rector/rector/config/set/code-quality.php');
+    $containerConfigurator->import(__DIR__ . '/vendor/rector/rector/config/set/type-declaration.php');
+    $containerConfigurator->import(__DIR__ . '/vendor/rector/rector/config/set/coding-style.php');
 
-    // === OPCIONAL ===
-    $rectorConfig->sets([
-        SetList::CODING_STYLE,
-        SetList::PRIVATIZATION,
-    ]);
-
-    // === AUTOIMPORTS ===
-    $rectorConfig->importNames();
-    $rectorConfig->removeUnusedImports();
+    // No custom services required here.
 };

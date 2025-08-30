@@ -33,7 +33,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.0",
         "ext-json": "*",
         "symfony/yaml": "^3.4.47"
     },
@@ -54,9 +54,8 @@
         "stan": [
             "phpstan analyse --level=9 --ansi --memory-limit=1G"
         ],
-        "pint": [
-            "pint check"
-        ],
+        "pint:check": "pint --test --verbose",
+        "pint:fix": "pint",
         "check": [
             "@cs:check",
             "@rector:check",
@@ -67,7 +66,7 @@
             "@cs:fix",
             "@rector:fix",
             "@stan",
-            "@pint:check"
+            "@pint:fix"
         ]
     },
     "bin": [

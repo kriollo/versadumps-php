@@ -22,6 +22,7 @@ class VersaDumps
         if (self::$instance !== null) {
             @trigger_error('Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.', E_USER_DEPRECATED);
         }
+
         // mantener referencia singleton a la última instancia creada
         self::$instance = $this;
         // Buscar el archivo de configuración en varias rutas comunes.
@@ -63,7 +64,7 @@ class VersaDumps
     }
 
     /** Dump variádico de datos */
-    public function vd(...$data): void
+    public function vd(array $data = []): void
     {
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
         $frame = [];
@@ -75,12 +76,13 @@ class VersaDumps
                 'function' => $caller['function'] ?? null,
             ];
         }
+
         $payload = [
             'context' => $data,
             'frame' => $frame,
         ];
 
-        self::post("http://{$this->host}:{$this->port}/data", json_encode($payload));
+        self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
     }
 
     private static function post(string $url, string $body): bool | string
@@ -97,6 +99,7 @@ class VersaDumps
 
             return $response;
         }
+
         // fallback to file_get_contents
         $opts = [
             'http' => [
@@ -116,6 +119,6 @@ class VersaDumps
 if (!\function_exists('vd')) {
     function vd(...$vars)
     {
-        \Versadumps\Versadumps\VersaDumps::getInstance()->vd(...$vars);
+        \Versadumps\Versadumps\VersaDumps::getInstance()->vd($vars);
     }
 }

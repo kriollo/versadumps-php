@@ -25,6 +25,6 @@ try {
     echo " - String enviado.\n";
 
     echo "Ejemplo finalizado. Revisa tu aplicación para ver los datos.\n";
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage() . "\n";
+} catch (Exception $exception) {
+    echo 'Error: ' . $exception->getMessage() . "\n";
 }
