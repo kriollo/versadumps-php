@@ -1,1 +1,29 @@
+# Composer
 vendor/
+composer.lock
+
+# IDEs
+/.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary
+tmp/
+*.tmp
+
+# Build artifacts
+dist/
+
+# PHPUnit
+phpunit.xml
+
+# Bin (opcional si no quieres subir ejecutables)
+# /bin/
