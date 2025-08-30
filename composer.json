@@ -13,7 +13,10 @@
     "autoload": {
         "psr-4": {
             "Versadumps\\Versadumps\\": "src/"
-        }
+        },
+        "files": [
+            "src/helpers.php"
+        ]
     },
     "authors": [
         {
@@ -37,6 +40,9 @@
     "scripts": {
         "versadumps-init": "Versadumps\\Versadumps\\Init::run"
     },
+    "bin": [
+        "bin/versadumps-init"
+    ],
     "support": {
         "issues": "https://github.com/kriollo/versaDumps/issues",
         "source": "https://github.com/kriollo/versaDumps"

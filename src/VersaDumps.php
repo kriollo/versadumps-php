@@ -2,15 +2,21 @@
 
 namespace Versadumps\Versadumps;
 
-use Symfony\Component\Yaml\Yaml;
 use Exception;
+use Symfony\Component\Yaml\Yaml;
 
 class VersaDumps
 {
     private string $host;
     private int $port;
 
-    public function __construct()
+    /** @var null|self */
+    private static ?self $instance = null;
+
+    /**
+     * Constructor privado para singleton
+     */
+    private function __construct()
     {
         $configFile = getcwd() . '/versadumps.yml';
 
@@ -21,6 +27,15 @@ class VersaDumps
         $config = Yaml::parseFile($configFile);
         $this->host = $config['host'] ?? '127.0.0.1';
         $this->port = $config['port'] ?? 9191;
+    }
+
+    /** Obtener la instancia singleton */
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
     }
 
     private static function post(string $url, string $body): bool|string
@@ -49,7 +64,8 @@ class VersaDumps
         return @file_get_contents($url, false, $context);
     }
 
-    public function vd($data): void
+    /** Dump variádico de datos */
+    public function vd(...$data): void
     {
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
         $frame = [];
@@ -66,6 +82,14 @@ class VersaDumps
             'frame' => $frame,
         ];
 
-        $this->post("http://{$this->host}:{$this->port}/data", json_encode($payload));
+        self::post("http://{$this->host}:{$this->port}/data", json_encode($payload));
+    }
+}
+
+// función global en espacio de nombres global. Se registra sólo si no existe.
+if (!\function_exists('vd')) {
+    function vd(...$vars)
+    {
+        \Versadumps\Versadumps\VersaDumps::getInstance()->vd(...$vars);
     }
 }

@@ -1,0 +1,7 @@
+#!/usr/bin/env php
+<?php
+// Ejecutable para crear versadumps.yml en el proyecto que instala este paquete
+require __DIR__ . '/../vendor/autoload.php';
+
+// nota: la clase real está en \Versadumps\Versadumps\Init
+\Versadumps\Versadumps\Init::run();
