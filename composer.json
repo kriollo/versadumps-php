@@ -1,0 +1,51 @@
+{
+    "name": "versadumps/versadumps",
+    "description": "paquete para php para enviar dumps a versaDumps Visualizer",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "debug",
+        "var_dump",
+        "dumps",
+        "visualizer",
+        "logger"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Versadumps\\Versadumps\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Jorge Jara",
+            "email": "jjara@wys.cl",
+            "homepage": "https://github.com/kriollo"
+        }
+    ],
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.4",
+        "ext-json": "*",
+        "symfony/yaml": "^5.0"
+    },
+    "scripts": {
+        "versadumps-init": "Versadumps\\Versadumps\\Init::run"
+    },
+    "support": {
+        "issues": "https://github.com/kriollo/versaDumps/issues",
+        "source": "https://github.com/kriollo/versaDumps"
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/kriollo"
+        }
+    ]
+
+}
