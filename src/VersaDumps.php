@@ -14,10 +14,15 @@ class VersaDumps
     private static ?self $instance = null;
 
     /**
-     * Constructor privado para singleton
+     * Constructor. Se deja público por compatibilidad, pero usar el singleton via getInstance() es preferible.
      */
-    private function __construct()
+    public function __construct()
     {
+        if (self::$instance !== null) {
+            @trigger_error("Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.", E_USER_DEPRECATED);
+        }
+        // mantener referencia singleton a la última instancia creada
+        self::$instance = $this;
         $configFile = getcwd() . '/versadumps.yml';
 
         if (!file_exists($configFile)) {
