@@ -1,7 +1,26 @@
 #!/usr/bin/env php
 <?php
 // Ejecutable para crear versadumps.yml en el proyecto que instala este paquete
-require __DIR__ . '/../vendor/autoload.php';
+// Localizar el autoload generado por Composer de forma robusta.
+$possible = [
+    __DIR__ . '/../vendor/autoload.php',        // cuando se ejecuta desde el repo (bin/)
+    __DIR__ . '/../../autoload.php',            // cuando se instala en vendor/<pkg>/bin/ y vendor/autoload.php está dos niveles arriba
+    __DIR__ . '/../autoload.php',               // alternativa
+];
 
-// nota: la clase real está en \Versadumps\Versadumps\Init
+$found = false;
+foreach ($possible as $p) {
+    if (file_exists($p)) {
+        require $p;
+        $found = true;
+        break;
+    }
+}
+
+if (!$found) {
+    fwrite(STDERR, "No se pudo localizar vendor/autoload.php. Ejecuta composer install en el proyecto o ejecuta este comando desde la raíz del repo.\n");
+    exit(1);
+}
+
+// Ejecuta la creación del archivo de configuración
 \Versadumps\Versadumps\Init::run();
