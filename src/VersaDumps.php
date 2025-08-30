@@ -8,9 +8,10 @@ use Symfony\Component\Yaml\Yaml;
 class VersaDumps
 {
     private string $host;
+
     private int $port;
 
-    /** @var null|self */
+    /** @var self|null */
     private static ?self $instance = null;
 
     /**
@@ -19,7 +20,7 @@ class VersaDumps
     public function __construct()
     {
         if (self::$instance !== null) {
-            @trigger_error("Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.", E_USER_DEPRECATED);
+            @trigger_error('Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.', E_USER_DEPRECATED);
         }
         // mantener referencia singleton a la última instancia creada
         self::$instance = $this;
@@ -57,33 +58,8 @@ class VersaDumps
         if (self::$instance === null) {
             self::$instance = new self();
         }
-        return self::$instance;
-    }
 
-    private static function post(string $url, string $body): bool|string
-    {
-        // prefer curl when available
-        if (function_exists('curl_init')) {
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-            $response = curl_exec($ch);
-            curl_close($ch);
-            return $response;
-        }
-        // fallback to file_get_contents
-        $opts = [
-            'http' => [
-                'method' => 'POST',
-                'header' => "Content-Type: application/json\r\n",
-                'content' => $body,
-                'timeout' => 1,
-            ],
-        ];
-        $context = stream_context_create($opts);
-        return @file_get_contents($url, false, $context);
+        return self::$instance;
     }
 
     /** Dump variádico de datos */
@@ -105,6 +81,34 @@ class VersaDumps
         ];
 
         self::post("http://{$this->host}:{$this->port}/data", json_encode($payload));
+    }
+
+    private static function post(string $url, string $body): bool | string
+    {
+        // prefer curl when available
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            return $response;
+        }
+        // fallback to file_get_contents
+        $opts = [
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/json\r\n",
+                'content' => $body,
+                'timeout' => 1,
+            ],
+        ];
+        $context = stream_context_create($opts);
+
+        return @file_get_contents($url, false, $context);
     }
 }
 

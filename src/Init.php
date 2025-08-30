@@ -12,6 +12,7 @@ class Init
 
         if (file_exists($configFile)) {
             echo "El archivo de configuración 'versadumps.yml' ya existe.\n";
+
             return;
         }
 

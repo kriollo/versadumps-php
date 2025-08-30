@@ -11,17 +11,16 @@ echo "Ejecutando ejemplo de VersaDumps...\n";
 try {
     // Crea una instancia de la clase
 
-
     // Envía los datos que quieras
     $miArray = ['nombre' => 'Juan', 'edad' => 30, 'ciudad' => 'Madrid'];
 
     vd($miArray);
     echo " - Array enviado.\n";
 
-    $otroDato = "Este es un string de prueba para VersaDumps.";
+    $otroDato = 'Este es un string de prueba para VersaDumps.';
     vd([
-        "modo" => "info",
-        "message" => $otroDato
+        'modo' => 'info',
+        'message' => $otroDato,
     ]);
     echo " - String enviado.\n";
 

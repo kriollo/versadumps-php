@@ -38,7 +38,37 @@
         "symfony/yaml": "^3.4.47"
     },
     "scripts": {
-        "versadumps-init": "Versadumps\\Versadumps\\Init::run"
+        "versadumps-init": "Versadumps\\Versadumps\\Init::run",
+        "cs:check": [
+            "php-cs-fixer fix --dry-run --diff --ansi --config=.php-cs-fixer.dist.php"
+        ],
+        "cs:fix": [
+            "php-cs-fixer fix --ansi --config=.php-cs-fixer.dist.php"
+        ],
+        "rector:check": [
+            "rector process --dry-run --ansi"
+        ],
+        "rector:fix": [
+            "rector process --ansi"
+        ],
+        "stan": [
+            "phpstan analyse --level=9 --ansi --memory-limit=1G"
+        ],
+        "pint": [
+            "pint check"
+        ],
+        "check": [
+            "@cs:check",
+            "@rector:check",
+            "@stan",
+            "@pint:check"
+        ],
+        "fix": [
+            "@cs:fix",
+            "@rector:fix",
+            "@stan",
+            "@pint:check"
+        ]
     },
     "bin": [
         "bin/versadumps-init"
@@ -52,5 +82,10 @@
             "type": "github",
             "url": "https://github.com/sponsors/kriollo"
         }
-    ]
+    ],
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "3.0",
+        "laravel/pint": "1.0",
+        "rector/rector": "0.12"
+    }
 }

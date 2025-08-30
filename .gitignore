@@ -27,3 +27,5 @@ phpunit.xml
 
 # Bin (opcional si no quieres subir ejecutables)
 # /bin/
+
+.php-cs-fixer.cache
