@@ -32,9 +32,9 @@ $config = (new PhpCsFixer\Config())
 
         // === ARRAY FORMATTING ===
         'array_syntax' => ['syntax' => 'short'],
-    'array_indentation' => true,
-    'trim_array_spaces' => true,
-    'no_trailing_comma_in_singleline_array' => true,
+        'array_indentation' => true,
+        'trim_array_spaces' => true,
+        'no_trailing_comma_in_singleline_array' => true,
         'trailing_comma_in_multiline' => ['elements' => ['arrays', 'arguments', 'parameters']],
 
         // === BINARY OPERATORS ===
@@ -61,7 +61,7 @@ $config = (new PhpCsFixer\Config())
         // === STRINGS - ORM/SQL SAFE ===
         'single_quote' => ['strings_containing_single_quote_chars' => false],
         // Disabled to avoid breaking SQL queries:
-    // 'string_implicit_backslashes' removed (not supported in this php-cs-fixer version)
+        // 'string_implicit_backslashes' removed (not supported in this php-cs-fixer version)
         'explicit_string_variable' => false,
         'simple_to_complex_string_variable' => false,
         'escape_implicit_backslashes' => false,
