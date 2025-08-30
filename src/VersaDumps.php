@@ -77,12 +77,54 @@ class VersaDumps
             ];
         }
 
+        // Normalizar/convertir objetos en el contexto
+        $normalized = [];
+        foreach ($data as $k => $v) {
+            $normalized[] = self::normalizeValue($v);
+        }
+
         $payload = [
-            'context' => $data,
+            'context' => $normalized,
             'frame' => $frame,
         ];
 
         self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
+    }
+
+    /** Normaliza un valor para envío: soporta toArray(), JsonSerializable y objetos simples. */
+    private static function normalizeValue(mixed $value): mixed
+    {
+        if (is_object($value)) {
+            // Si el objeto define toArray(), úsalo
+            if (method_exists($value, 'toArray')) {
+                try {
+                    return $value->toArray();
+                } catch (\Throwable $e) {
+                    // fallthrough
+                }
+            }
+
+            // Si implementa JsonSerializable, use jsonSerialize
+            if ($value instanceof \JsonSerializable) {
+                try {
+                    return $value->jsonSerialize();
+                } catch (\Throwable $e) {
+                    // fallthrough
+                }
+            }
+
+            // Último recurso: convertir propiedades públicas
+            $vars = get_object_vars($value);
+            if (!empty($vars)) {
+                return $vars;
+            }
+
+            // Si no hay propiedades públicas, serializar a string como último recurso
+            return (string) $value;
+        }
+
+        // arrays o scalars se devuelven tal cual
+        return $value;
     }
 
     private static function post(string $url, string $body): bool | string
