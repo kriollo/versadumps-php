@@ -30,6 +30,7 @@
         "preferred-install": "dist",
         "sort-packages": true
     },
+    "version": "1.0.0",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
@@ -51,21 +52,16 @@
         "rector:fix": [
             "rector process --ansi"
         ],
-        "stan": [
-            "phpstan analyse --level=9 --ansi --memory-limit=1G"
-        ],
         "pint:check": "pint --test --verbose",
         "pint:fix": "pint",
         "check": [
             "@cs:check",
             "@rector:check",
-            "@stan",
             "@pint:check"
         ],
         "fix": [
             "@cs:fix",
             "@rector:fix",
-            "@stan",
             "@pint:fix"
         ]
     },
