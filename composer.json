@@ -1,5 +1,5 @@
 {
-    "name": "versadumps-php/versadumps-php",
+    "name": "kriollo/versadumps-php",
     "description": "paquete para php para enviar dumps a versaDumps Visualizer",
     "type": "library",
     "license": "MIT",
