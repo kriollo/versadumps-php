@@ -13,4 +13,3 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Múltiples ajustes de compatibilidad con proyectos consumidores y mejoras de UX del bin.
 - Configuración de `rector.php` corregida y ejecuciones de dry-run completadas.
-
