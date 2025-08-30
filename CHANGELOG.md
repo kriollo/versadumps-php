@@ -22,3 +22,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Ajustes menores y tests manuales para validar objetos con métodos.
+
+## [1.2.1] - 2025-08-29
+### Added
+- Soporte recursivo y seguro en la normalización de objetos (manejo de colecciones, DateTime, prevención de recursión y lectura de propiedades privadas/protegidas).
+
+### Fixed
+- Corregida clase en `example/index.php` y robustecimiento de la selección de frame.
+

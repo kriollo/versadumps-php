@@ -20,17 +20,20 @@ class VersaDumps
     public function __construct()
     {
         if (self::$instance !== null) {
-            @trigger_error('Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.', E_USER_DEPRECATED);
+            @trigger_error(
+                'Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.',
+                E_USER_DEPRECATED,
+            );
         }
 
         // mantener referencia singleton a la última instancia creada
         self::$instance = $this;
         // Buscar el archivo de configuración en varias rutas comunes.
         $candidates = [
-            getcwd() . '/versadumps.yml',                    // working dir del proceso
-            __DIR__ . '/../versadumps.yml',                  // raíz del paquete
-            __DIR__ . '/../../versadumps.yml',               // posible ruta cuando está en vendor/<pkg>/src
-            dirname(__DIR__, 2) . '/versadumps.yml',         // subir más niveles
+            getcwd() . '/versadumps.yml', // working dir del proceso
+            __DIR__ . '/../versadumps.yml', // raíz del paquete
+            __DIR__ . '/../../versadumps.yml', // posible ruta cuando está en vendor/<pkg>/src
+            dirname(__DIR__, 2) . '/versadumps.yml', // subir más niveles
             // buscar en vendor del proyecto llamador
             getcwd() . '/vendor/versadumps-php/versadumps-php/versadumps.yml',
             getcwd() . '/vendor/versadumps-php/versadumps-php/src/versadumps.yml',
@@ -45,7 +48,9 @@ class VersaDumps
         }
 
         if ($configFile === null) {
-            throw new Exception("El archivo de configuración 'versadumps.yml' no se encuentra. Ejecuta 'composer run-script versadumps-init' o php vendor/bin/versadumps-init para crearlo.");
+            throw new Exception(
+                "El archivo de configuración 'versadumps.yml' no se encuentra. Ejecuta 'composer run-script versadumps-init' o php vendor/bin/versadumps-init para crearlo.",
+            );
         }
 
         $config = Yaml::parseFile($configFile);
@@ -73,7 +78,7 @@ class VersaDumps
         $helpersPath = realpath(__DIR__ . '/helpers.php');
 
         $selected = null;
-        for ($i = 1, $len = count($bt); $i < $len; $i++) {
+        for ($i = 1, $len = count($bt); $i < $len; ++$i) {
             $f = $bt[$i];
             $file = isset($f['file']) ? (realpath($f['file']) ?: $f['file']) : null;
 
@@ -82,6 +87,7 @@ class VersaDumps
                 if ($selfPath !== false && $file === $selfPath) {
                     continue;
                 }
+
                 if ($helpersPath !== false && $file === $helpersPath) {
                     continue;
                 }
@@ -100,7 +106,8 @@ class VersaDumps
             $frame = [
                 'file' => $selected['file'] ?? null,
                 'line' => $selected['line'] ?? null,
-                'function' => isset($selected['class']) ? ($selected['class'] . '::' . ($selected['function'] ?? '')) : ($selected['function'] ?? null),
+                'function' => $selected['function'] ?? null,
+                'class' => $selected['class'] ?? null,
             ];
         }
 
@@ -118,40 +125,117 @@ class VersaDumps
         self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
     }
 
-    /** Normaliza un valor para envío: soporta toArray(), JsonSerializable y objetos simples. */
-    private static function normalizeValue(mixed $value): mixed
+    /**
+     * Normaliza un valor para envío: soporta toArray(), JsonSerializable, Traversable, DateTime,
+     * y convierte objetos (incluyendo propiedades protegidas/privadas) a arrays recurriendo.
+     * Evita recursión mediante un mapa de objetos ya visitados.
+     */
+    private static function normalizeValue(mixed $value, array &$seen = []): mixed
     {
-        if (is_object($value)) {
-            // Si el objeto define toArray(), úsalo
-            if (method_exists($value, 'toArray')) {
-                try {
-                    return $value->toArray();
-                } catch (\Throwable $e) {
-                    // fallthrough
-                }
-            }
-
-            // Si implementa JsonSerializable, use jsonSerialize
-            if ($value instanceof \JsonSerializable) {
-                try {
-                    return $value->jsonSerialize();
-                } catch (\Throwable $e) {
-                    // fallthrough
-                }
-            }
-
-            // Último recurso: convertir propiedades públicas
-            $vars = get_object_vars($value);
-            if (!empty($vars)) {
-                return $vars;
-            }
-
-            // Si no hay propiedades públicas, serializar a string como último recurso
-            return (string) $value;
+        // scalars y null
+        if (is_null($value) || is_scalar($value)) {
+            return $value;
         }
 
-        // arrays o scalars se devuelven tal cual
-        return $value;
+        // arrays: normalizar recursivamente
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $out[$k] = self::normalizeValue($v, $seen);
+            }
+
+            return $out;
+        }
+
+        // Traversable (Collections, iterators)
+        if ($value instanceof \Traversable) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $out[$k] = self::normalizeValue($v, $seen);
+            }
+
+            return $out;
+        }
+
+        // DateTime: formatear
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format(DATE_ATOM);
+        }
+
+        // Objetos
+        if (is_object($value)) {
+            // evitar recursión: identificar por spl_object_id
+            $id = spl_object_id($value);
+            if (isset($seen[$id])) {
+                return ['__recursion__' => true, '__class__' => get_class($value)];
+            }
+
+            $seen[$id] = true;
+
+            // Si define toArray(), preferirlo
+            if (method_exists($value, 'toArray')) {
+                try {
+                    $res = $value->toArray();
+
+                    return self::normalizeValue($res, $seen);
+                } catch (\Throwable $throwable) {
+                }
+            }
+
+            // JsonSerializable
+            if ($value instanceof \JsonSerializable) {
+                try {
+                    $res = $value->jsonSerialize();
+
+                    return self::normalizeValue($res, $seen);
+                } catch (\Throwable $throwable) {
+                    // fallthrough
+                }
+            }
+
+            // Usar reflexión para leer propiedades públicas/protegidas/privadas
+            $out = ['__class__' => get_class($value)];
+
+            try {
+                $ref = new \ReflectionObject($value);
+                foreach ($ref->getProperties() as $prop) {
+                    $prop->setAccessible(true);
+                    $name = $prop->getName();
+                    // indicar visibilidad si no es pública
+                    $prefix = '';
+                    if ($prop->isProtected()) {
+                        $prefix = 'protected:';
+                    }
+
+                    if ($prop->isPrivate()) {
+                        $prefix = 'private:' . $prop->class . ':';
+                    }
+
+                    try {
+                        $val = $prop->getValue($value);
+                    } catch (\ReflectionException $reflectionException) {
+                        $val = null;
+                    }
+
+                    $out[$prefix . $name] = self::normalizeValue($val, $seen);
+                }
+            } catch (\Throwable $reflectionException) {
+                // si falla reflexión, caer al cast simple
+                try {
+                    $cast = (array) $value;
+                    foreach ($cast as $k => $v) {
+                        $out[$k] = self::normalizeValue($v, $seen);
+                    }
+                } catch (\Throwable $_) {
+                    $out['__toString'] = method_exists($value, '__toString') ? (string) $value : null;
+                }
+            }
+
+            return $out;
+        }
+
+        // fallback
+        return (string) $value;
     }
 
     private static function post(string $url, string $body): bool | string

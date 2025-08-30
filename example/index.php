@@ -27,12 +27,16 @@ try {
         vd($obj);
         echo " - Objeto enviado.\n";
 
-        // Definir una clase con métodos y enviar una instancia
-        class User
+    // Definir una clase con métodos y enviar una instancia
+    class User
         {
             private string $name;
+
             private array $roles;
 
+            /**
+             * @param mixed[] $roles
+             */
             public function __construct(string $name, array $roles = [])
             {
                 $this->name = $name;
@@ -44,11 +48,17 @@ try {
                 return $this->name;
             }
 
+            /**
+             * @return mixed[]
+             */
             public function getRoles(): array
             {
                 return $this->roles;
             }
 
+            /**
+             * @return array<string, mixed[]>
+             */
             public function toArray(): array
             {
                 return ['name' => $this->name, 'roles' => $this->roles];
