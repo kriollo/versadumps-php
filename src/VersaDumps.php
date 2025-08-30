@@ -66,14 +66,41 @@ class VersaDumps
     /** Dump variádico de datos */
     public function vd(array $data = []): void
     {
-        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
+        // Elige el frame apropiado del backtrace: saltar el wrapper global `vd` y esta clase/helpers
+        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
         $frame = [];
-        if (isset($bt[1])) {
-            $caller = $bt[1];
+        $selfPath = realpath(__FILE__);
+        $helpersPath = realpath(__DIR__ . '/helpers.php');
+
+        $selected = null;
+        for ($i = 1, $len = count($bt); $i < $len; $i++) {
+            $f = $bt[$i];
+            $file = isset($f['file']) ? (realpath($f['file']) ?: $f['file']) : null;
+
+            // saltar si el frame pertenece a esta clase o al helper global
+            if ($file !== null) {
+                if ($selfPath !== false && $file === $selfPath) {
+                    continue;
+                }
+                if ($helpersPath !== false && $file === $helpersPath) {
+                    continue;
+                }
+            }
+
+            // saltar wrappers con función 'vd'
+            if (isset($f['function']) && $f['function'] === 'vd') {
+                continue;
+            }
+
+            $selected = $f;
+            break;
+        }
+
+        if ($selected !== null) {
             $frame = [
-                'file' => $caller['file'] ?? null,
-                'line' => $caller['line'] ?? null,
-                'function' => $caller['function'] ?? null,
+                'file' => $selected['file'] ?? null,
+                'line' => $selected['line'] ?? null,
+                'function' => isset($selected['class']) ? ($selected['class'] . '::' . ($selected['function'] ?? '')) : ($selected['function'] ?? null),
             ];
         }
 
