@@ -22,4 +22,3 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Ajustes menores y tests manuales para validar objetos con métodos.
-
