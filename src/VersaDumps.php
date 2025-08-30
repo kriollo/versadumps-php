@@ -23,10 +23,27 @@ class VersaDumps
         }
         // mantener referencia singleton a la última instancia creada
         self::$instance = $this;
-        $configFile = getcwd() . '/versadumps.yml';
+        // Buscar el archivo de configuración en varias rutas comunes.
+        $candidates = [
+            getcwd() . '/versadumps.yml',                    // working dir del proceso
+            __DIR__ . '/../versadumps.yml',                  // raíz del paquete
+            __DIR__ . '/../../versadumps.yml',               // posible ruta cuando está en vendor/<pkg>/src
+            dirname(__DIR__, 2) . '/versadumps.yml',         // subir más niveles
+            // buscar en vendor del proyecto llamador
+            getcwd() . '/vendor/versadumps-php/versadumps-php/versadumps.yml',
+            getcwd() . '/vendor/versadumps-php/versadumps-php/src/versadumps.yml',
+        ];
 
-        if (!file_exists($configFile)) {
-            throw new Exception("El archivo de configuración 'versadumps.yml' no se encuentra. Ejecuta 'composer run-script versadumps-init' para crearlo.");
+        $configFile = null;
+        foreach ($candidates as $c) {
+            if (file_exists($c)) {
+                $configFile = $c;
+                break;
+            }
+        }
+
+        if ($configFile === null) {
+            throw new Exception("El archivo de configuración 'versadumps.yml' no se encuentra. Ejecuta 'composer run-script versadumps-init' o php vendor/bin/versadumps-init para crearlo.");
         }
 
         $config = Yaml::parseFile($configFile);
