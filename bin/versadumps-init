@@ -6,6 +6,9 @@ $possible = [
     __DIR__ . '/../vendor/autoload.php',        // cuando se ejecuta desde el repo (bin/)
     __DIR__ . '/../../autoload.php',            // cuando se instala en vendor/<pkg>/bin/ y vendor/autoload.php está dos niveles arriba
     __DIR__ . '/../autoload.php',               // alternativa
+    __DIR__ . '/../../../autoload.php',         // subir más niveles
+    __DIR__ . '/../../../../autoload.php',      // subir aún más
+    getcwd() . '/vendor/autoload.php',          // intentar desde el working dir del proceso
 ];
 
 $found = false;
