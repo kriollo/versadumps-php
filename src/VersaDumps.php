@@ -69,43 +69,86 @@ class VersaDumps
     }
 
     /** Dump variádico de datos */
-    public function vd(array $data = []): void
+    public function vd(array $data = [], ?array $callerFrame = null): void
     {
-        // Elige el frame apropiado del backtrace: saltar el wrapper global `vd` y esta clase/helpers
-        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+        // recoger backtrace y rutas
+        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
+        // dump($bt);
+
         $frame = [];
         $selfPath = realpath(__FILE__);
         $helpersPath = realpath(__DIR__ . '/helpers.php');
 
+        // if a caller frame was provided by the global helper, prefer it
         $selected = null;
-        for ($i = 1, $len = count($bt); $i < $len; ++$i) {
-            $f = $bt[$i];
-            $file = isset($f['file']) ? (realpath($f['file']) ?: $f['file']) : null;
+        $candidate = null;
 
-            // saltar si el frame pertenece a esta clase o al helper global
-            if ($file !== null) {
-                if ($selfPath !== false && $file === $selfPath) {
+        $fileNew = '';
+        $lineNew = 0;
+        if (null !== $callerFrame && is_array($callerFrame)) {
+            $selected = $callerFrame;
+            $fileNew = $callerFrame['file'] ?? '';
+            $lineNew = $callerFrame['line'] ?? 0;
+        } else {
+            $projectRoot = realpath(getcwd()) ?: null;
+
+            // Preferir frames que pertenezcan al código de la aplicación (p. ej. carpeta app/) o
+            // al namespace 'app\'. Evitar vendor y las propias clases del paquete.
+            for ($i = 1, $len = count($bt); $i < $len; ++$i) {
+                $f = $bt[$i];
+                $file = isset($f['file']) ? (realpath($f['file']) ?: $f['file']) : null;
+
+                if ($i == 1) {
+                    $fileNew = $file;
+                    $lineNew = $f['line'] ?? 0;
+                }
+
+                // saltar si el frame pertenece a esta clase o al helper global
+                if ($file !== null) {
+                    if ($selfPath !== false && $file === $selfPath) {
+                        continue;
+                    }
+                    if ($helpersPath !== false && $file === $helpersPath) {
+                        continue;
+                    }
+                }
+
+                // saltar wrappers con función 'vd'
+                if (isset($f['function']) && $f['function'] === 'vd') {
                     continue;
                 }
 
-                if ($helpersPath !== false && $file === $helpersPath) {
-                    continue;
+                // Si la clase pertenece al namespace app\, elegir inmediatamente
+                if (!empty($f['class']) && strpos($f['class'], 'app\\') === 0) {
+                    $selected = $f;
+                    break;
+                }
+
+                // Si el archivo está dentro del proyecto y no en vendor/, preferirlo
+                if ($file !== null && $projectRoot !== null) {
+                    $lower = str_replace('\\', '/', strtolower($file));
+                    $rootLower = str_replace('\\', '/', strtolower($projectRoot));
+                    if (strpos($lower, $rootLower) === 0 && strpos($lower, '/vendor/') === false) {
+                        $selected = $f;
+                        break;
+                    }
+                }
+
+                // guardar primer candidato válido como fallback
+                if ($candidate === null && $file !== null) {
+                    $candidate = $f;
                 }
             }
 
-            // saltar wrappers con función 'vd'
-            if (isset($f['function']) && $f['function'] === 'vd') {
-                continue;
+            if ($selected === null && $candidate !== null) {
+                $selected = $candidate;
             }
-
-            $selected = $f;
-            break;
         }
 
         if ($selected !== null) {
             $frame = [
-                'file' => $selected['file'] ?? null,
-                'line' => $selected['line'] ?? null,
+                'file' => $fileNew,
+                'line' => $lineNew,
                 'function' => $selected['function'] ?? null,
                 'class' => $selected['class'] ?? null,
             ];
@@ -238,7 +281,7 @@ class VersaDumps
         return (string) $value;
     }
 
-    private static function post(string $url, string $body): bool | string
+    private static function post(string $url, string $body): bool|string
     {
         // prefer curl when available
         if (function_exists('curl_init')) {
@@ -272,6 +315,10 @@ class VersaDumps
 if (!\function_exists('vd')) {
     function vd(...$vars)
     {
-        \Versadumps\Versadumps\VersaDumps::getInstance()->vd($vars);
+        // capture caller frame (one level up) and pass it to the instance so reported file/line are accurate
+        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+        // frame 1 is the caller of this wrapper (the site that invoked vd); use it when available
+        $caller = $bt[1] ?? ($bt[0] ?? null);
+        \Versadumps\Versadumps\VersaDumps::getInstance()->vd($vars, $caller);
     }
 }

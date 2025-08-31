@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Correcciones menores y mejoras en la lógica de normalización y ejemplos.
 
+## [1.2.3] - 2025-08-31
+### Added
+- Inclusión de cambios locales finales: ajustes en `src/VersaDumps.php` y `example/index.php`.
+
+### Fixed
+- Ajustes menores en el ejemplo y comportamiento de `vd()`.
+
 
 ## [1.0.0] - 2025-08-29
 ### Added

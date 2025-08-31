@@ -27,8 +27,8 @@ try {
         vd($obj);
         echo " - Objeto enviado.\n";
 
-    // Definir una clase con métodos y enviar una instancia
-    class User
+        // Definir una clase con métodos y enviar una instancia
+        class index
         {
             private string $name;
 
@@ -65,7 +65,7 @@ try {
             }
         }
 
-        $user = new User('Carlos', ['user', 'moderator']);
+        $user = new index('Carlos', ['user', 'moderator']);
         vd($user);
         echo " - User objeto enviado.\n";
     }
