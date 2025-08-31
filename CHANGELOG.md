@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2025-08-31
+### Added
+- Pequeños ajustes y cambios manuales realizados por el mantenedor (actualizaciones en `src/VersaDumps.php` y `example/index.php`).
+
+### Fixed
+- Correcciones menores y mejoras en la lógica de normalización y ejemplos.
+
+
 ## [1.0.0] - 2025-08-29
 ### Added
 - Singleton `VersaDumps` con `getInstance()` y helper global `vd()` (cargado vía `autoload.files`).
@@ -29,4 +37,3 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Corregida clase en `example/index.php` y robustecimiento de la selección de frame.
-
