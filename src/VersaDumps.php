@@ -85,7 +85,7 @@ class VersaDumps
 
         $fileNew = '';
         $lineNew = 0;
-        if (null !== $callerFrame && is_array($callerFrame)) {
+        if ($callerFrame !== null && is_array($callerFrame)) {
             $selected = $callerFrame;
             $fileNew = $callerFrame['file'] ?? '';
             $lineNew = $callerFrame['line'] ?? 0;
@@ -98,7 +98,7 @@ class VersaDumps
                 $f = $bt[$i];
                 $file = isset($f['file']) ? (realpath($f['file']) ?: $f['file']) : null;
 
-                if ($i == 1) {
+                if ($i === 1) {
                     $fileNew = $file;
                     $lineNew = $f['line'] ?? 0;
                 }
@@ -108,6 +108,7 @@ class VersaDumps
                     if ($selfPath !== false && $file === $selfPath) {
                         continue;
                     }
+
                     if ($helpersPath !== false && $file === $helpersPath) {
                         continue;
                     }
@@ -281,7 +282,7 @@ class VersaDumps
         return (string) $value;
     }
 
-    private static function post(string $url, string $body): bool|string
+    private static function post(string $url, string $body): bool | string
     {
         // prefer curl when available
         if (function_exists('curl_init')) {

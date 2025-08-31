@@ -2,20 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.2] - 2025-08-31
+## [1.2.3] - 2025-08-31
 ### Added
-- Pequeños ajustes y cambios manuales realizados por el mantenedor (actualizaciones en `src/VersaDumps.php` y `example/index.php`).
+- Ajusta el nombre del archivo desde donde se produce la llamada de la funcion vd para una mejor experiencia en el desarrollo y uso de la herramienta versadumps Visualizer (actualizaciones en `src/VersaDumps.php` y `example/index.php`).
 
 ### Fixed
 - Correcciones menores y mejoras en la lógica de normalización y ejemplos.
 
-## [1.2.3] - 2025-08-31
+## [1.2.1] - 2025-08-31
 ### Added
 - Inclusión de cambios locales finales: ajustes en `src/VersaDumps.php` y `example/index.php`.
 
 ### Fixed
 - Ajustes menores en el ejemplo y comportamiento de `vd()`.
 
+## [1.2.1] - 2025-08-29
+### Added
+- Soporte recursivo y seguro en la normalización de objetos (manejo de colecciones, DateTime, prevención de recursión y lectura de propiedades privadas/protegidas).
+
+### Fixed
+- Corregida clase en `example/index.php` y robustecimiento de la selección de frame.
+
+## [1.1.0] - 2025-08-29
+### Added
+- Normalización automática de objetos en `vd()`: si el objeto define `toArray()` se usará; si implementa `JsonSerializable` se usará `jsonSerialize()`, y como fallback `get_object_vars()`.
+- Selección mejorada del frame que disparó `vd()` en el payload (se omiten el helper global y la propia clase para reportar la función real, p.ej. `test`).
+- `VERSADUMPS_DRY_RUN=1` para imprimir payloads en consola durante pruebas.
 
 ## [1.0.0] - 2025-08-29
 ### Added
@@ -29,18 +41,7 @@ All notable changes to this project will be documented in this file.
 - Múltiples ajustes de compatibilidad con proyectos consumidores y mejoras de UX del bin.
 - Configuración de `rector.php` corregida y ejecuciones de dry-run completadas.
 
-## [1.1.0] - 2025-08-29
-### Added
-- Normalización automática de objetos en `vd()`: si el objeto define `toArray()` se usará; si implementa `JsonSerializable` se usará `jsonSerialize()`, y como fallback `get_object_vars()`.
-- Selección mejorada del frame que disparó `vd()` en el payload (se omiten el helper global y la propia clase para reportar la función real, p.ej. `test`).
-- `VERSADUMPS_DRY_RUN=1` para imprimir payloads en consola durante pruebas.
+
 
 ### Changed
 - Ajustes menores y tests manuales para validar objetos con métodos.
-
-## [1.2.1] - 2025-08-29
-### Added
-- Soporte recursivo y seguro en la normalización de objetos (manejo de colecciones, DateTime, prevención de recursión y lectura de propiedades privadas/protegidas).
-
-### Fixed
-- Corregida clase en `example/index.php` y robustecimiento de la selección de frame.
