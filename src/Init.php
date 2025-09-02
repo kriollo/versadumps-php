@@ -2,8 +2,6 @@
 
 namespace Versadumps\Versadumps;
 
-use Symfony\Component\Yaml\Yaml;
-
 class Init
 {
     public static function run(): void
@@ -21,7 +19,7 @@ class Init
             'port' => 9191,
         ];
 
-        $yaml = Yaml::dump($config);
+        $yaml = YamlParser::dump($config);
 
         file_put_contents($configFile, $yaml);
 

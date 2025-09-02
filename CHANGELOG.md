@@ -2,15 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.0.1] - 2025-09-02
-### Updated
+## [2.0.0] - 2025-09-02
+### Added
+- **Parser YAML propio**: Implementada clase `YamlParser` para reemplazar `symfony/yaml` y evitar conflictos de versiones en proyectos consumidores
+  - Soporte completo para configuraciones básicas (key: value, arrays, comentarios)
+  - Manejo de tipos: strings, integers, floats, booleans, null, arrays
+  - Generación de archivos YAML desde arrays PHP
 - Configuraciones de herramientas de desarrollo actualizadas para PHP 8.1+ con compatibilidad mejorada:
   - `php-cs-fixer`: Migrado a reglas `@PHP81Migration` y versiones compatibles (`^3.40`)
   - `rector`: Actualizado a sintaxis v1.x con `LevelSetList::UP_TO_PHP_81`
   - `laravel/pint`: Actualizado a versión `^1.15` compatible con PHP 8.1
-- Dependencias downgradeadas para mantener compatibilidad con PHP 8.1+:
-  - `symfony/yaml`: `^6.4` (desde `^7.3.3`)
-  - Todas las dependencias Symfony actualizadas a versiones 6.x compatibles
+
+### Removed
+- **Dependencia symfony/yaml eliminada**: Reemplazada por parser propio para evitar conflictos de versiones
+- Dependencias Symfony downgradeadas para mantener compatibilidad con PHP 8.1+
 
 ### Fixed
 - Resueltos problemas de compatibilidad de platform requirements
@@ -20,6 +25,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Requirement de PHP mantenido en `>=8.1` para mayor compatibilidad
 - Todas las herramientas de linting y refactoring funcionando correctamente
+- Reducción significativa de dependencias externas (solo `ext-json` requerido)
 
 ## [1.2.3] - 2025-08-31
 ### Added

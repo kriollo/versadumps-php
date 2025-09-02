@@ -3,7 +3,6 @@
 namespace Versadumps\Versadumps;
 
 use Exception;
-use Symfony\Component\Yaml\Yaml;
 
 class VersaDumps
 {
@@ -53,7 +52,7 @@ class VersaDumps
             );
         }
 
-        $config = Yaml::parseFile($configFile);
+        $config = YamlParser::parseFile($configFile);
         $this->host = $config['host'] ?? '127.0.0.1';
         $this->port = $config['port'] ?? 9191;
     }
