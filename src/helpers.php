@@ -6,7 +6,7 @@ if (!function_exists('vd')) {
     {
         try {
             \Versadumps\Versadumps\VersaDumps::getInstance()->vd($vars);
-        } catch (\Throwable $throwable) {
+        } catch (\Throwable) {
             // evitar que errores de configuración rompan scripts de usuario
             // se podría loguear o mostrar dependiendo del entorno
         }

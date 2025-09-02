@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2025-09-02
+### Updated
+- Configuraciones de herramientas de desarrollo actualizadas para PHP 8.1+ con compatibilidad mejorada:
+  - `php-cs-fixer`: Migrado a reglas `@PHP81Migration` y versiones compatibles (`^3.40`)
+  - `rector`: Actualizado a sintaxis v1.x con `LevelSetList::UP_TO_PHP_81`
+  - `laravel/pint`: Actualizado a versión `^1.15` compatible con PHP 8.1
+- Dependencias downgradeadas para mantener compatibilidad con PHP 8.1+:
+  - `symfony/yaml`: `^6.4` (desde `^7.3.3`)
+  - Todas las dependencias Symfony actualizadas a versiones 6.x compatibles
+
+### Fixed
+- Resueltos problemas de compatibilidad de platform requirements
+- Configuración de Rector migrada de sintaxis v2.x a v1.x
+- Excluido `example/index.php` del análisis de Rector para evitar conflictos con clases locales
+
+### Changed
+- Requirement de PHP mantenido en `>=8.1` para mayor compatibilidad
+- Todas las herramientas de linting y refactoring funcionando correctamente
+
 ## [1.2.3] - 2025-08-31
 ### Added
 - Ajusta el nombre del archivo desde donde se produce la llamada de la funcion vd para una mejor experiencia en el desarrollo y uso de la herramienta versadumps Visualizer (actualizaciones en `src/VersaDumps.php` y `example/index.php`).

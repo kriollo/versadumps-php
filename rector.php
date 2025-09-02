@@ -2,27 +2,25 @@
 
 declare(strict_types=1);
 
-use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Rector\Config\RectorConfig;
+use Rector\Set\ValueObject\LevelSetList;
 
-return static function (ContainerConfigurator $containerConfigurator): void {
-    $parameters = $containerConfigurator->parameters();
-
-    $parameters->set('paths', [
+return static function (RectorConfig $rectorConfig): void {
+    $rectorConfig->paths([
         __DIR__ . '/src',
         __DIR__ . '/bin',
         __DIR__ . '/example',
     ]);
 
-    $parameters->set('skip', [
+    $rectorConfig->skip([
         __DIR__ . '/vendor',
         __DIR__ . '/var',
         __DIR__ . '/app/cache',
+        __DIR__ . '/example/index.php', // Skip due to local class analysis issues
     ]);
 
-    // Import sets
-    $containerConfigurator->import(__DIR__ . '/vendor/rector/rector/config/set/code-quality.php');
-    $containerConfigurator->import(__DIR__ . '/vendor/rector/rector/config/set/type-declaration.php');
-    $containerConfigurator->import(__DIR__ . '/vendor/rector/rector/config/set/coding-style.php');
-
-    // No custom services required here.
+    // Configure sets
+    $rectorConfig->sets([
+        LevelSetList::UP_TO_PHP_81,
+    ]);
 };

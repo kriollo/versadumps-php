@@ -7,9 +7,9 @@ use Symfony\Component\Yaml\Yaml;
 
 class VersaDumps
 {
-    private string $host;
+    private readonly string $host;
 
-    private int $port;
+    private readonly int $port;
 
     /** @var self|null */
     private static ?self $instance = null;
@@ -120,7 +120,7 @@ class VersaDumps
                 }
 
                 // Si la clase pertenece al namespace app\, elegir inmediatamente
-                if (!empty($f['class']) && strpos($f['class'], 'app\\') === 0) {
+                if (!empty($f['class']) && str_starts_with($f['class'], 'app\\')) {
                     $selected = $f;
                     break;
                 }
@@ -129,7 +129,7 @@ class VersaDumps
                 if ($file !== null && $projectRoot !== null) {
                     $lower = str_replace('\\', '/', strtolower($file));
                     $rootLower = str_replace('\\', '/', strtolower($projectRoot));
-                    if (strpos($lower, $rootLower) === 0 && strpos($lower, '/vendor/') === false) {
+                    if (str_starts_with($lower, $rootLower) && !str_contains($lower, '/vendor/')) {
                         $selected = $f;
                         break;
                     }
@@ -211,7 +211,7 @@ class VersaDumps
             // evitar recursión: identificar por spl_object_id
             $id = spl_object_id($value);
             if (isset($seen[$id])) {
-                return ['__recursion__' => true, '__class__' => get_class($value)];
+                return ['__recursion__' => true, '__class__' => $value::class];
             }
 
             $seen[$id] = true;
@@ -222,7 +222,7 @@ class VersaDumps
                     $res = $value->toArray();
 
                     return self::normalizeValue($res, $seen);
-                } catch (\Throwable $throwable) {
+                } catch (\Throwable) {
                 }
             }
 
@@ -232,13 +232,13 @@ class VersaDumps
                     $res = $value->jsonSerialize();
 
                     return self::normalizeValue($res, $seen);
-                } catch (\Throwable $throwable) {
+                } catch (\Throwable) {
                     // fallthrough
                 }
             }
 
             // Usar reflexión para leer propiedades públicas/protegidas/privadas
-            $out = ['__class__' => get_class($value)];
+            $out = ['__class__' => $value::class];
 
             try {
                 $ref = new \ReflectionObject($value);
@@ -257,20 +257,20 @@ class VersaDumps
 
                     try {
                         $val = $prop->getValue($value);
-                    } catch (\ReflectionException $reflectionException) {
+                    } catch (\ReflectionException) {
                         $val = null;
                     }
 
                     $out[$prefix . $name] = self::normalizeValue($val, $seen);
                 }
-            } catch (\Throwable $reflectionException) {
+            } catch (\Throwable) {
                 // si falla reflexión, caer al cast simple
                 try {
                     $cast = (array) $value;
                     foreach ($cast as $k => $v) {
                         $out[$k] = self::normalizeValue($v, $seen);
                     }
-                } catch (\Throwable $_) {
+                } catch (\Throwable) {
                     $out['__toString'] = method_exists($value, '__toString') ? (string) $value : null;
                 }
             }

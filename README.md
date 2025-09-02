@@ -1,4 +1,7 @@
 # VersaDumps PHP
+[![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4.svg)](#)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#)
+[![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](#)
 
 VersaDumps PHP es una pequeña librería para enviar "dumps" (estructuras de datos, mensajes, etc.) a un visualizador VersaDumps.
 
@@ -6,7 +9,7 @@ Este README explica cómo instalar y usar el paquete tanto desde el repositorio 
 
 ## Requisitos
 
-- PHP >= 7.4
+- PHP >= 8.1
 - ext-json
 - Composer
 

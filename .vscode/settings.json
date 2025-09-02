@@ -1,5 +1,5 @@
 {
-  "php.validate.executablePath": "C:\\wampnew64\\bin\\php\\php8.0.30\\php.exe",
-  "php.workspace.includePath": "C:\\wampnew64\\bin\\php\\php8.0.30\\pear",
-  "intelephense.environment.phpVersion": "8.0.30"
+  "php.validate.executablePath": "C:\\wamp64\\bin\\php\\php8.1.31\\php.exe",
+  "php.workspace.includePath": "C:\\wamp64\\bin\\php\\php8.1.31\\pear",
+  "intelephense.environment.phpVersion": "8.1.31"
 }
