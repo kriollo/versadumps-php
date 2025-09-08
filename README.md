@@ -84,8 +84,9 @@ require 'vendor/autoload.php';
 2. Usa la función `vd()` en cualquier parte de tu código:
 
 ```php
-vd(['nombre' => 'Juan', 'edad' => 30]);
-vd('Un mensaje simple');
+vd("Usuario", ['nombre' => 'Juan', 'edad' => 30]);
+vd("mensaje", 'Un mensaje simple');
+vd("", $usuarios); // se envia nombre de la variable $usuarios
 ```
 
 Internamente, `vd()` delega a un singleton `Versadumps\Versadumps\VersaDumps` que envía los datos a `http://{host}:{port}/data`. Los valores por defecto se toman desde `versadumps.yml`.
