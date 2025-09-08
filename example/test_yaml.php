@@ -14,22 +14,22 @@ var_dump($result);
 echo "\n";
 
 // Test 2: Diferentes tipos de datos
-$typesYaml = "
+$typesYaml = '
 string_value: hello world
 integer_value: 42
 float_value: 3.14
 boolean_true: true
 boolean_false: false
 null_value: null
-quoted_string: \"hello with spaces\"
-";
+quoted_string: "hello with spaces"
+';
 $result = YamlParser::parse($typesYaml);
 echo "Test 2 - Diferentes tipos:\n";
 var_dump($result);
 echo "\n";
 
 // Test 3: Arrays
-$arrayYaml = "
+$arrayYaml = '
 simple_array:
   - item1
   - item2
@@ -38,7 +38,7 @@ mixed_array:
   - string item
   - 123
   - true
-";
+';
 $result = YamlParser::parse($arrayYaml);
 echo "Test 3 - Arrays:\n";
 var_dump($result);
@@ -50,7 +50,7 @@ $data = [
     'port' => 9191,
     'debug' => true,
     'features' => ['logging', 'encryption', 'compression'],
-    'timeout' => 30.5
+    'timeout' => 30.5,
 ];
 $generated = YamlParser::dump($data);
 echo "Test 4 - Generación de YAML:\n";

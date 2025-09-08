@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-09-08
+### Added
+- **Inferencia automática de nombres de variable**: Cuando no se proporciona etiqueta explícita, `vd()` ahora detecta automáticamente el nombre de la variable pasada
+  - Soporte para variables simples: `vd("", $miVariable)` → label: `$miVariable`
+  - Soporte para propiedades de objeto: `vd("", $obj->propiedad)` → label: `$obj->propiedad`
+  - Soporte para elementos de array: `vd("", $array[indice])` → label: `$array[indice]`
+  - Fallback seguro: expresiones complejas no detectadas no causan errores
+
+### Changed
+- **Refactorización de la lógica de detección**: Centralizada toda la inferencia de nombres de variable en el método `processCallerFrame`
+- **Helper simplificado**: El helper global `vd()` ahora es más limpio y sin duplicación de código
+- **Mejor separación de responsabilidades**: Una sola ubicación para la lógica de análisis de código fuente
+
+### Fixed
+- Eliminada duplicación de lógica entre helper global y método `processCallerFrame`
+- Mejorada la detección del frame caller para reportar correctamente la función que invoca `vd()`
+
 ## [2.0.0] - 2025-09-02
 ### Added
 - **Parser YAML propio**: Implementada clase `YamlParser` para reemplazar `symfony/yaml` y evitar conflictos de versiones en proyectos consumidores

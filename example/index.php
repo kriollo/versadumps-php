@@ -15,7 +15,7 @@ try {
         // Envía los datos que quieras
         $miArray = ['nombre' => 'Juan', 'edad' => 30, 'ciudad' => 'Madrid'];
 
-        vd($miArray);
+        vd('', $miArray);
         echo " - Array enviado.\n";
 
         // Enviar un objeto de prueba (stdClass)
@@ -24,7 +24,7 @@ try {
         $obj->roles = ['admin', 'editor'];
         $obj->meta = (object) ['activo' => true, 'visitas' => 42];
 
-        vd($obj);
+        vd('', $obj);
         echo " - Objeto enviado.\n";
 
         // Definir una clase con métodos y enviar una instancia
@@ -66,7 +66,7 @@ try {
         }
 
         $user = new index('Carlos', ['user', 'moderator']);
-        vd($user);
+        vd('', $user);
         echo " - User objeto enviado.\n";
     }
 
@@ -74,7 +74,7 @@ try {
     test();
 
     $otroDato = 'Este es un string de prueba para VersaDumps.';
-    vd([
+    vd('', [
         'modo' => 'info',
         'message' => $otroDato,
     ]);

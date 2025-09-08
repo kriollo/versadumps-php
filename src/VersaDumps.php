@@ -67,13 +67,31 @@ class VersaDumps
         return self::$instance;
     }
 
-    /** Dump variádico de datos */
-    public function vd(array $data = [], ?array $callerFrame = null): void
+    /** Dump variádico de datos.
+     * @param array<int,mixed> $data
+     */
+    public function vd(array $data = [], ?string $label = null): void
     {
         // recoger backtrace y rutas
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
-        // dump($bt);
+        $frame = $this->processCallerFrame($bt, null);
+        // Normalizar/convertir objetos en el contexto
+        $normalized = [];
+        foreach ($data as $k => $v) {
+            $normalized[] = self::normalizeValue($v);
+        }
 
+        $payload = [
+            'context' => $normalized,
+            'frame' => $frame,
+            'label' => $label === null || $label === '' ? $frame['variableName'] : $label,
+        ];
+
+        self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
+    }
+
+    private function processCallerFrame($bt, array $callerFrame = null): array
+    {
         $frame = [];
         $selfPath = realpath(__FILE__);
         $helpersPath = realpath(__DIR__ . '/helpers.php');
@@ -84,10 +102,14 @@ class VersaDumps
 
         $fileNew = '';
         $lineNew = 0;
+        $variableName = null;
+        $function = null;
+        $class = null;
         if ($callerFrame !== null && is_array($callerFrame)) {
             $selected = $callerFrame;
             $fileNew = $callerFrame['file'] ?? '';
             $lineNew = $callerFrame['line'] ?? 0;
+            $variableName = $callerFrame['variable'] ?? null;
         } else {
             $projectRoot = realpath(getcwd()) ?: null;
 
@@ -119,14 +141,14 @@ class VersaDumps
                 }
 
                 // Si la clase pertenece al namespace app\, elegir inmediatamente
-                if (!empty($f['class']) && str_starts_with($f['class'], 'app\\')) {
+                if (!empty($f['class']) && str_starts_with((string) $f['class'], 'app\\')) {
                     $selected = $f;
                     break;
                 }
 
                 // Si el archivo está dentro del proyecto y no en vendor/, preferirlo
                 if ($file !== null && $projectRoot !== null) {
-                    $lower = str_replace('\\', '/', strtolower($file));
+                    $lower = str_replace('\\', '/', strtolower((string) $file));
                     $rootLower = str_replace('\\', '/', strtolower($projectRoot));
                     if (str_starts_with($lower, $rootLower) && !str_contains($lower, '/vendor/')) {
                         $selected = $f;
@@ -143,29 +165,28 @@ class VersaDumps
             if ($selected === null && $candidate !== null) {
                 $selected = $candidate;
             }
+
+            // Inferir nombre de variable desde código fuente si no se proporcionó
+            if ($variableName === null && $fileNew && $lineNew && is_readable($fileNew)) {
+                $src = @file($fileNew, FILE_IGNORE_NEW_LINES);
+                if ($src !== false && isset($src[$lineNew - 1])) {
+                    $codeLine = $src[$lineNew - 1];
+
+                    // Buscar la llamada a vd() en la línea
+                    if (preg_match('/vd\s*\(\s*"[^"]*"\s*,\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)/u', $codeLine, $matches)) {
+                        $variableName = $matches[1];
+                    }
+                }
+            }
         }
 
-        if ($selected !== null) {
-            $frame = [
-                'file' => $fileNew,
-                'line' => $lineNew,
-                'function' => $selected['function'] ?? null,
-                'class' => $selected['class'] ?? null,
-            ];
-        }
-
-        // Normalizar/convertir objetos en el contexto
-        $normalized = [];
-        foreach ($data as $k => $v) {
-            $normalized[] = self::normalizeValue($v);
-        }
-
-        $payload = [
-            'context' => $normalized,
-            'frame' => $frame,
+        return [
+            'file' => $fileNew,
+            'line' => $lineNew,
+            'function' => $selected['function'] ?? null,
+            'class' => $selected['class'] ?? null,
+            'variableName' => $variableName,
         ];
-
-        self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
     }
 
     /**
@@ -311,14 +332,4 @@ class VersaDumps
     }
 }
 
-// función global en espacio de nombres global. Se registra sólo si no existe.
-if (!\function_exists('vd')) {
-    function vd(...$vars)
-    {
-        // capture caller frame (one level up) and pass it to the instance so reported file/line are accurate
-        $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
-        // frame 1 is the caller of this wrapper (the site that invoked vd); use it when available
-        $caller = $bt[1] ?? ($bt[0] ?? null);
-        \Versadumps\Versadumps\VersaDumps::getInstance()->vd($vars, $caller);
-    }
-}
+// helper global moved to src/helpers.php
