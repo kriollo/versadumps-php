@@ -138,7 +138,7 @@ vd($exception)->error();     // Rojo - error
 ```php
 function procesarPedido($pedido) {
     vd($pedido)->label('Pedido recibido')->trace(5);
-    
+
     try {
         $resultado = procesar($pedido);
         vd($resultado)->success();
