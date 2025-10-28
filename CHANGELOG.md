@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2025-10-28
+### Added
+- **Patrón Builder con interfaz fluida**: La función `vd()` ahora retorna un objeto `VersaDumpsBuilder` que permite encadenar métodos de configuración
+- **13 métodos de extensión del builder**:
+  - `label(string)`: Define etiqueta personalizada explícita
+  - `color(string)`: Establece color personalizado (10 colores disponibles)
+  - `trace(int)`: Incluye stack trace con N niveles (default: 5)
+  - `depth(int)`: Limita profundidad de serialización para estructuras complejas
+  - `once()`: Ejecuta solo la primera vez (útil en loops)
+  - `if(bool)`: Ejecución condicional (solo si true)
+  - `unless(bool)`: Ejecución condicional (solo si false)
+  - `send()`: Forzar ejecución inmediata sin esperar al destructor
+  - **Métodos semánticos** para clasificación visual:
+    - `info()`: Color azul para información general
+    - `success()`: Color verde para operaciones exitosas
+    - `warning()`: Color amarillo para advertencias
+    - `error()`: Color rojo para errores críticos
+    - `important()`: Color naranja para datos importantes
+- **Sistema de metadata**: Nuevo campo opcional `metadata` en el payload que incluye `color`, `includeTrace` y `max_depth`
+- **10 colores predefinidos**: red, green, blue, yellow, purple, orange, pink, cyan, gray, white
+- **Ejecución lazy**: El builder ejecuta automáticamente en su destructor o con `send()` explícito
+- **Cache para once()**: Sistema de cache basado en archivo:línea:label para evitar ejecuciones duplicadas
+- **Documentación completa**:
+  - `BUILDER_EXTENSIONS.md`: Documentación detallada de todas las extensiones
+  - `SEMANTIC_METHODS.md`: Guía rápida de métodos semánticos
+  - `PAYLOAD_SPECIFICATION.md`: Especificación técnica completa del payload JSON
+- **Ejemplos avanzados**:
+  - `example/advanced.php`: 10 ejemplos con todas las extensiones
+  - `example/semantic-methods.php`: 7 ejemplos de métodos semánticos
+  - `example/payload-examples.php`: 14 ejemplos de payloads para implementación del servidor
+
+### Changed
+- **Propiedades readonly**: `$host` y `$port` ahora son readonly (PHP 8.1+) para evitar mutabilidad
+- **Valores por defecto mejorados**: Config con fallback a `127.0.0.1:9191` usando operador `??`
+- **Firma del método vd()**: Ahora acepta parámetro `metadata` opcional: `vd(array $data = [], ?string $label = null, array $metadata = [])`
+- **Backward compatible**: El estilo tradicional `vd("label", $data)` sigue funcionando sin cambios
+- **Detección mejorada**: Mejor lógica para distinguir estilo tradicional vs moderno
+- **README actualizado**: Documentación completa con ejemplos de todas las características
+
+### Fixed
+- Eliminadas variables no utilizadas en `processCallerFrame`: `$frame`, `$function`, `$class`
+- Corregido nombre de clase en `example/index.php` (de `index` a `User`)
+- Mejorada detección de estilo tradicional para evitar falsos positivos
+
+### Performance
+- **Ejecución condicional**: `if()` y `unless()` evitan procesamiento innecesario
+- **Once cache**: Reduce overhead en loops grandes
+- **Depth control**: Limita serialización de estructuras profundas
+
 ## [2.1.0] - 2025-09-08
 ### Added
 - **Inferencia automática de nombres de variable**: Cuando no se proporciona etiqueta explícita, `vd()` ahora detecta automáticamente el nombre de la variable pasada

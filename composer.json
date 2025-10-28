@@ -1,6 +1,6 @@
 {
     "name": "versadumps-php/versadumps-php",
-    "description": "paquete para php para enviar dumps a versaDumps Visualizer",
+    "description": "Librería PHP moderna para enviar dumps a versaDumps Visualizer con Builder Pattern, métodos semánticos, stack traces y 10 colores predefinidos",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -8,7 +8,11 @@
         "var_dump",
         "dumps",
         "visualizer",
-        "logger"
+        "logger",
+        "debugging",
+        "builder-pattern",
+        "semantic-methods",
+        "stack-trace"
     ],
     "autoload": {
         "psr-4": {
@@ -30,7 +34,7 @@
         "preferred-install": "dist",
         "sort-packages": true
     },
-    "version": "2.1.0",
+    "version": "2.2.0",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {

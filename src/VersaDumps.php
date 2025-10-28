@@ -6,9 +6,9 @@ use Exception;
 
 class VersaDumps
 {
-    private $host;
+    private readonly string $host;
 
-    private $port;
+    private readonly int $port;
 
     /** @var self|null */
     private static ?self $instance = null;
@@ -53,8 +53,8 @@ class VersaDumps
         }
 
         $config = YamlParser::parseFile($configFile);
-        $this->host = $config['host'];
-        $this->port = $config['port'];
+        $this->host = $config['host'] ?? '127.0.0.1';
+        $this->port = $config['port'] ?? 9191;
     }
 
     /** Obtener la instancia singleton */
@@ -69,8 +69,10 @@ class VersaDumps
 
     /** Dump variádico de datos.
      * @param array<int,mixed> $data
+     * @param string|null $label Etiqueta opcional
+     * @param array<string,mixed> $metadata Metadata adicional (trace, color, max_depth, etc.)
      */
-    public function vd(array $data = [], ?string $label = null): void
+    public function vd(array $data = [], ?string $label = null, array $metadata = []): void
     {
         // recoger backtrace y rutas
         $bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
@@ -87,12 +89,16 @@ class VersaDumps
             'label' => $label === null || $label === '' ? $frame['variableName'] : $label,
         ];
 
+        // Agregar metadata si existe
+        if (!empty($metadata)) {
+            $payload['metadata'] = $metadata;
+        }
+
         self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
     }
 
     private function processCallerFrame($bt, array $callerFrame = null): array
     {
-        $frame = [];
         $selfPath = realpath(__FILE__);
         $helpersPath = realpath(__DIR__ . '/helpers.php');
 
@@ -103,8 +109,7 @@ class VersaDumps
         $fileNew = '';
         $lineNew = 0;
         $variableName = null;
-        $function = null;
-        $class = null;
+
         if ($callerFrame !== null && is_array($callerFrame)) {
             $selected = $callerFrame;
             $fileNew = $callerFrame['file'] ?? '';
