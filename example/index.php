@@ -15,7 +15,7 @@ try {
         // Envía los datos que quieras
         $miArray = ['nombre' => 'Juan', 'edad' => 30, 'ciudad' => 'Madrid'];
 
-        vd('', $miArray);
+        vd('array', $miArray);
         echo " - Array enviado.\n";
 
         // Enviar un objeto de prueba (stdClass)
@@ -24,7 +24,7 @@ try {
         $obj->roles = ['admin', 'editor'];
         $obj->meta = (object) ['activo' => true, 'visitas' => 42];
 
-        vd('', $obj);
+        vd('objeto', $obj);
         echo " - Objeto enviado.\n";
 
         // Definir una clase con métodos y enviar una instancia
@@ -66,19 +66,13 @@ try {
         }
 
         $user = new index('Carlos', ['user', 'moderator']);
-        vd('', $user);
+        vd('Usuario', $user);
         echo " - User objeto enviado.\n";
     }
 
     // llamar a la función test para que sea el caller en el backtrace
     test();
 
-    $otroDato = 'Este es un string de prueba para VersaDumps.';
-    vd('', [
-        'modo' => 'info',
-        'message' => $otroDato,
-    ]);
-    echo " - String enviado.\n";
 
     echo "Ejemplo finalizado. Revisa tu aplicación para ver los datos.\n";
 } catch (Exception $exception) {

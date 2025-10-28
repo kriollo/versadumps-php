@@ -6,9 +6,9 @@ use Exception;
 
 class VersaDumps
 {
-    private readonly string $host;
+    private $host;
 
-    private readonly int $port;
+    private $port;
 
     /** @var self|null */
     private static ?self $instance = null;
@@ -53,8 +53,8 @@ class VersaDumps
         }
 
         $config = YamlParser::parseFile($configFile);
-        $this->host = $config['host'] ?? '127.0.0.1';
-        $this->port = $config['port'] ?? 9191;
+        $this->host = $config['host'];
+        $this->port = $config['port'];
     }
 
     /** Obtener la instancia singleton */
@@ -172,8 +172,25 @@ class VersaDumps
                 if ($src !== false && isset($src[$lineNew - 1])) {
                     $codeLine = $src[$lineNew - 1];
 
-                    // Buscar la llamada a vd() en la línea
-                    if (preg_match('/vd\s*\(\s*"[^"]*"\s*,\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)/u', $codeLine, $matches)) {
+                    // Buscar la llamada a vd() en diferentes formatos:
+                    // 1. vd($variable) - nuevo formato
+                    // 2. vd($variable)->label('label') - nuevo formato con label
+                    // 3. vd('label', $variable) - formato tradicional
+
+                    // Intentar capturar variable en formato nuevo: vd($variable) o vd($variable)->...
+                    if (preg_match(
+                        '/vd\s*\(\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)\s*\)(?:\s*->\s*\w+\s*\([^)]*\))?/u',
+                        $codeLine,
+                        $matches,
+                    )) {
+                        $variableName = $matches[1];
+                    }
+                    // Si no encontró en formato nuevo, intentar formato tradicional: vd('label', $variable)
+                    elseif (preg_match(
+                        '/vd\s*\(\s*["\'][^"\']*["\']\s*,\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)/u',
+                        $codeLine,
+                        $matches,
+                    )) {
                         $variableName = $matches[1];
                     }
                 }
@@ -302,7 +319,7 @@ class VersaDumps
         return (string) $value;
     }
 
-    private static function post(string $url, string $body): bool | string
+    private static function post(string $url, string $body): bool|string
     {
         // prefer curl when available
         if (function_exists('curl_init')) {
