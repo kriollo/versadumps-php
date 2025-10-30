@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.2] - 2025-10-29
+### Changed
+- **upgrade from 2.2.0 to 2.2.2
+
 ## [2.2.1] - 2025-10-29
 ### Added
 - **Helper method `isVersaDumpsFrame()`**: Nueva función interna para identificar de manera confiable los frames internos de VersaDumps y reducir falsos positivos
