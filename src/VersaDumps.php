@@ -20,7 +20,7 @@ class VersaDumps
     {
         if (self::$instance !== null) {
             @trigger_error(
-                'Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.',
+                "Instanciación directa de VersaDumps está desaprobada. Usa VersaDumps::getInstance() en su lugar.",
                 E_USER_DEPRECATED,
             );
         }
@@ -29,13 +29,13 @@ class VersaDumps
         self::$instance = $this;
         // Buscar el archivo de configuración en varias rutas comunes.
         $candidates = [
-            getcwd() . '/versadumps.yml', // working dir del proceso
-            __DIR__ . '/../versadumps.yml', // raíz del paquete
-            __DIR__ . '/../../versadumps.yml', // posible ruta cuando está en vendor/<pkg>/src
-            dirname(__DIR__, 2) . '/versadumps.yml', // subir más niveles
+            getcwd() . "/versadumps.yml", // working dir del proceso
+            __DIR__ . "/../versadumps.yml", // raíz del paquete
+            __DIR__ . "/../../versadumps.yml", // posible ruta cuando está en vendor/<pkg>/src
+            dirname(__DIR__, 2) . "/versadumps.yml", // subir más niveles
             // buscar en vendor del proyecto llamador
-            getcwd() . '/vendor/versadumps-php/versadumps-php/versadumps.yml',
-            getcwd() . '/vendor/versadumps-php/versadumps-php/src/versadumps.yml',
+            getcwd() . "/vendor/versadumps-php/versadumps-php/versadumps.yml",
+            getcwd() . "/vendor/versadumps-php/versadumps-php/src/versadumps.yml",
         ];
 
         $configFile = null;
@@ -53,8 +53,8 @@ class VersaDumps
         }
 
         $config = YamlParser::parseFile($configFile);
-        $this->host = $config['host'] ?? '127.0.0.1';
-        $this->port = $config['port'] ?? 9191;
+        $this->host = $config["host"] ?? "127.0.0.1";
+        $this->port = $config["port"] ?? 9191;
     }
 
     /** Obtener la instancia singleton */
@@ -84,91 +84,143 @@ class VersaDumps
         }
 
         $payload = [
-            'context' => $normalized,
-            'frame' => $frame,
-            'label' => $label === null || $label === '' ? $frame['variableName'] : $label,
+            "context" => $normalized,
+            "frame" => $frame,
+            "label" => $label === null || $label === "" ? $frame["variableName"] : $label,
         ];
 
         // Agregar metadata si existe
         if (!empty($metadata)) {
-            $payload['metadata'] = $metadata;
+            $payload["metadata"] = $metadata;
         }
 
-        self::post(sprintf('http://%s:%d/data', $this->host, $this->port), json_encode($payload));
+        self::post(sprintf("http://%s:%d/data", $this->host, $this->port), json_encode($payload));
     }
 
     private function processCallerFrame($bt, array $callerFrame = null): array
     {
         $selfPath = realpath(__FILE__);
-        $helpersPath = realpath(__DIR__ . '/helpers.php');
+        $helpersPath = realpath(__DIR__ . "/helpers.php");
+        $versaDumpsDir = realpath(__DIR__);
 
         // if a caller frame was provided by the global helper, prefer it
         $selected = null;
         $candidate = null;
 
-        $fileNew = '';
+        $fileNew = "";
         $lineNew = 0;
         $variableName = null;
 
         if ($callerFrame !== null && is_array($callerFrame)) {
             $selected = $callerFrame;
-            $fileNew = $callerFrame['file'] ?? '';
-            $lineNew = $callerFrame['line'] ?? 0;
-            $variableName = $callerFrame['variable'] ?? null;
+            $fileNew = $callerFrame["file"] ?? "";
+            $lineNew = $callerFrame["line"] ?? 0;
+            $variableName = $callerFrame["variable"] ?? null;
         } else {
+            // Obtener el file, linea, variableName y demas datos del frame que llamo a vd
+            // Se debe omitir los frames de esta clase y del helper global
             $projectRoot = realpath(getcwd()) ?: null;
+            $firstValidFrame = null; // Primer frame válido del usuario
+            $callerFileFrame = null; // Frame que contiene el file/line de la llamada real
 
-            // Preferir frames que pertenezcan al código de la aplicación (p. ej. carpeta app/) o
-            // al namespace 'app\'. Evitar vendor y las propias clases del paquete.
-            for ($i = 1, $len = count($bt); $i < $len; ++$i) {
+            for ($i = 0, $len = count($bt); $i < $len; ++$i) {
                 $f = $bt[$i];
-                $file = isset($f['file']) ? (realpath($f['file']) ?: $f['file']) : null;
+                $file = isset($f["file"]) ? (realpath($f["file"]) ?: $f["file"]) : null;
 
-                if ($i === 1) {
-                    $fileNew = $file;
-                    $lineNew = $f['line'] ?? 0;
-                }
+                // Verificar si este frame debe saltarse (es de versaDumps)
+                $shouldSkip = $this->isVersaDumpsFrame($f, $file, $selfPath, $helpersPath, $versaDumpsDir);
 
-                // saltar si el frame pertenece a esta clase o al helper global
-                if ($file !== null) {
-                    if ($selfPath !== false && $file === $selfPath) {
-                        continue;
-                    }
-
-                    if ($helpersPath !== false && $file === $helpersPath) {
-                        continue;
-                    }
-                }
-
-                // saltar wrappers con función 'vd'
-                if (isset($f['function']) && $f['function'] === 'vd') {
+                if ($shouldSkip) {
                     continue;
                 }
 
-                // Si la clase pertenece al namespace app\, elegir inmediatamente
-                if (!empty($f['class']) && str_starts_with((string) $f['class'], 'app\\')) {
-                    $selected = $f;
-                    break;
+                // Este es un frame del código del usuario
+                // Si aún no hemos encontrado el frame válido, este es
+                if ($firstValidFrame === null) {
+                    $firstValidFrame = $f;
                 }
 
-                // Si el archivo está dentro del proyecto y no en vendor/, preferirlo
-                if ($file !== null && $projectRoot !== null) {
-                    $lower = str_replace('\\', '/', strtolower((string) $file));
-                    $rootLower = str_replace('\\', '/', strtolower($projectRoot));
-                    if (str_starts_with($lower, $rootLower) && !str_contains($lower, '/vendor/')) {
+                // CASO ESPECIAL: Si este frame es __destruct() en archivo de usuario,
+                // tomar su file/line pero NO usarlo para function/class
+                $isDestructorFrame =
+                    !empty($f["class"]) &&
+                    $f["class"] === "VersaDumpsBuilder" &&
+                    !empty($f["function"]) &&
+                    $f["function"] === "__destruct";
+
+                // Buscar el frame con file/line (el que contiene la línea de código real)
+                if ($callerFileFrame === null && $file !== null && isset($f["line"])) {
+                    $callerFileFrame = $f;
+                    $fileNew = $file;
+                    $lineNew = $f["line"];
+
+                    // Si es __destruct(), continuar buscando para obtener la función real
+                    if ($isDestructorFrame) {
+                        continue; // No seleccionar este frame para function/class
+                    }
+                }
+
+                // Seleccionar el frame adecuado para function/class
+                // NO seleccionar si es __destruct de VersaDumpsBuilder
+                if ($isDestructorFrame) {
+                    continue; // Saltar este frame para la selección de function/class
+                }
+
+                // Priorizar frames del namespace app\
+                if (!empty($f["class"]) && str_starts_with((string) $f["class"], "app\\")) {
+                    if ($selected === null) {
                         $selected = $f;
+                    }
+                    // Si ya tenemos file/line del destructor, podemos parar aquí
+                    if ($callerFileFrame !== null) {
                         break;
                     }
                 }
 
-                // guardar primer candidato válido como fallback
+                // Si el archivo está dentro del proyecto y no en vendor/, es buen candidato
+                if ($file !== null && $projectRoot !== null) {
+                    $lower = str_replace("\\", "/", strtolower((string) $file));
+                    $rootLower = str_replace("\\", "/", strtolower($projectRoot));
+                    if (str_starts_with($lower, $rootLower) && !str_contains($lower, "/vendor/")) {
+                        if ($selected === null) {
+                            $selected = $f;
+                        }
+                    }
+                }
+
+                // Guardar primer candidato válido como fallback
                 if ($candidate === null && $file !== null) {
                     $candidate = $f;
                 }
+
+                // Si ya encontramos un frame seleccionado del namespace app\
+                // y tenemos un callerFileFrame válido, podemos parar
+                if (
+                    $selected !== null &&
+                    $callerFileFrame !== null &&
+                    !empty($selected["class"]) &&
+                    str_starts_with((string) $selected["class"], "app\\")
+                ) {
+                    break;
+                }
             }
 
+            // Fallbacks
             if ($selected === null && $candidate !== null) {
                 $selected = $candidate;
+            }
+
+            if ($selected === null && $firstValidFrame !== null) {
+                $selected = $firstValidFrame;
+            }
+
+            // Si no encontramos callerFileFrame pero tenemos firstValidFrame con file
+            if (empty($fileNew) && $firstValidFrame !== null) {
+                $fileNew = isset($firstValidFrame["file"])
+                    ? (realpath($firstValidFrame["file"]) ?:
+                    $firstValidFrame["file"])
+                    : "";
+                $lineNew = $firstValidFrame["line"] ?? 0;
             }
 
             // Inferir nombre de variable desde código fuente si no se proporcionó
@@ -183,19 +235,23 @@ class VersaDumps
                     // 3. vd('label', $variable) - formato tradicional
 
                     // Intentar capturar variable en formato nuevo: vd($variable) o vd($variable)->...
-                    if (preg_match(
-                        '/vd\s*\(\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)\s*\)(?:\s*->\s*\w+\s*\([^)]*\))?/u',
-                        $codeLine,
-                        $matches,
-                    )) {
+                    if (
+                        preg_match(
+                            '/vd\s*\(\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)\s*\)(?:\s*->\s*\w+\s*\([^)]*\))?/u',
+                            $codeLine,
+                            $matches,
+                        )
+                    ) {
                         $variableName = $matches[1];
                     }
                     // Si no encontró en formato nuevo, intentar formato tradicional: vd('label', $variable)
-                    elseif (preg_match(
-                        '/vd\s*\(\s*["\'][^"\']*["\']\s*,\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)/u',
-                        $codeLine,
-                        $matches,
-                    )) {
+                    elseif (
+                        preg_match(
+                            '/vd\s*\(\s*["\'][^"\']*["\']\s*,\s*(\$[a-zA-Z_][a-zA-Z0-9_]*(?:->[a-zA-Z_][a-zA-Z0-9_]*)*|\$[a-zA-Z_][a-zA-Z0-9_]*(?:\[[^\]]+\])*)/u',
+                            $codeLine,
+                            $matches,
+                        )
+                    ) {
                         $variableName = $matches[1];
                     }
                 }
@@ -203,12 +259,90 @@ class VersaDumps
         }
 
         return [
-            'file' => $fileNew,
-            'line' => $lineNew,
-            'function' => $selected['function'] ?? null,
-            'class' => $selected['class'] ?? null,
-            'variableName' => $variableName,
+            "file" => $fileNew,
+            "line" => $lineNew,
+            "function" => $selected["function"] ?? null,
+            "class" => $selected["class"] ?? null,
+            "variableName" => $variableName,
         ];
+    }
+
+    /**
+     * Verifica si un frame pertenece a versaDumps y debe ser saltado
+     */
+    private function isVersaDumpsFrame(array $f, null|string $file, $selfPath, $helpersPath, $versaDumpsDir): bool
+    {
+        // 1. Verificar archivos de versaDumps
+        if ($file !== null) {
+            if ($selfPath !== false && $file === $selfPath) {
+                return true;
+            }
+            if ($helpersPath !== false && $file === $helpersPath) {
+                return true;
+            }
+            if ($versaDumpsDir !== false && str_starts_with((string) $file, $versaDumpsDir)) {
+                return true;
+            }
+            if (str_contains((string) $file, "versadumps-php")) {
+                return true;
+            }
+        }
+
+        // 2. Verificar clases de versaDumps
+        if (!empty($f["class"])) {
+            $class = (string) $f["class"];
+
+            // CASO ESPECIAL: Si la clase es VersaDumpsBuilder con __destruct en archivo de usuario,
+            // este frame contiene la línea correcta donde se creó el builder (vd())
+            if ($class === "VersaDumpsBuilder" && !empty($f["function"]) && $f["function"] === "__destruct") {
+                // Verificar si el archivo es del usuario (no de versaDumps)
+                $isUserFile =
+                    $file !== null &&
+                    !str_contains((string) $file, "versadumps-php") &&
+                    ($versaDumpsDir === false || !str_starts_with((string) $file, $versaDumpsDir));
+
+                if ($isUserFile) {
+                    return false; // NO saltar, este es el frame correcto con la línea de vd()
+                }
+            }
+
+            // Para las demás clases de versaDumps, sí saltar
+            if (str_starts_with($class, "Versadumps\\") || $class === "VersaDumps" || $class === "VersaDumpsBuilder") {
+                return true;
+            }
+        }
+
+        // 3. Verificar funciones/métodos internos de versaDumps
+        if (!empty($f["function"])) {
+            $function = (string) $f["function"];
+            $internalMethods = [
+                "vd",
+                "execute",
+                "__destruct", // Se maneja arriba para el caso especial
+                "label",
+                "trace",
+                "color",
+                "depth",
+                "once",
+                "if",
+                "unless",
+                "important",
+                "info",
+                "success",
+                "warning",
+                "error",
+                "send",
+                "normalizeValue",
+                "processCallerFrame",
+                "isVersaDumpsFrame",
+            ];
+
+            if (in_array($function, $internalMethods, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -253,13 +387,13 @@ class VersaDumps
             // evitar recursión: identificar por spl_object_id
             $id = spl_object_id($value);
             if (isset($seen[$id])) {
-                return ['__recursion__' => true, '__class__' => $value::class];
+                return ["__recursion__" => true, "__class__" => $value::class];
             }
 
             $seen[$id] = true;
 
             // Si define toArray(), preferirlo
-            if (method_exists($value, 'toArray')) {
+            if (method_exists($value, "toArray")) {
                 try {
                     $res = $value->toArray();
 
@@ -280,7 +414,7 @@ class VersaDumps
             }
 
             // Usar reflexión para leer propiedades públicas/protegidas/privadas
-            $out = ['__class__' => $value::class];
+            $out = ["__class__" => $value::class];
 
             try {
                 $ref = new \ReflectionObject($value);
@@ -288,13 +422,13 @@ class VersaDumps
                     $prop->setAccessible(true);
                     $name = $prop->getName();
                     // indicar visibilidad si no es pública
-                    $prefix = '';
+                    $prefix = "";
                     if ($prop->isProtected()) {
-                        $prefix = 'protected:';
+                        $prefix = "protected:";
                     }
 
                     if ($prop->isPrivate()) {
-                        $prefix = 'private:' . $prop->class . ':';
+                        $prefix = "private:" . $prop->class . ":";
                     }
 
                     try {
@@ -313,7 +447,7 @@ class VersaDumps
                         $out[$k] = self::normalizeValue($v, $seen);
                     }
                 } catch (\Throwable) {
-                    $out['__toString'] = method_exists($value, '__toString') ? (string) $value : null;
+                    $out["__toString"] = method_exists($value, "__toString") ? (string) $value : null;
                 }
             }
 
@@ -327,11 +461,11 @@ class VersaDumps
     private static function post(string $url, string $body): bool|string
     {
         // prefer curl when available
-        if (function_exists('curl_init')) {
+        if (function_exists("curl_init")) {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
             $response = curl_exec($ch);
             curl_close($ch);
@@ -341,11 +475,11 @@ class VersaDumps
 
         // fallback to file_get_contents
         $opts = [
-            'http' => [
-                'method' => 'POST',
-                'header' => "Content-Type: application/json\r\n",
-                'content' => $body,
-                'timeout' => 1,
+            "http" => [
+                "method" => "POST",
+                "header" => "Content-Type: application/json\r\n",
+                "content" => $body,
+                "timeout" => 1,
             ],
         ];
         $context = stream_context_create($opts);
