@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.1] - 2025-10-29
+### Added
+- **Helper method `isVersaDumpsFrame()`**: Nueva función interna para identificar de manera confiable los frames internos de VersaDumps y reducir falsos positivos
+- **Heurística mejorada para selección de caller**: Prioriza archivos con namespace `app\` y archivos del proyecto sobre vendor y frames internos
+- **Fallbacks sensatos**: Sistema de respaldo mejorado cuando no se encuentra el caller ideal
+
+### Changed
+- **Detección de caller frame mejorada**: Manejo especial de `VersaDumpsBuilder::__destruct` para capturar correctamente el archivo/línea del usuario cuando se usa el patrón builder
+- **Refactorización de lógica de skip**: Centralizada la lógica para omitir frames internos usando el nuevo helper `isVersaDumpsFrame()`
+- **Consistencia en comillas**: Aplicados cambios menores de formato en ejemplos y código fuente para mayor consistencia
+
+### Fixed
+- Corregida la captura de archivo/línea real del usuario cuando se usa el builder pattern con ejecución lazy (destructor)
+- Reducidos falsos positivos en la detección de frames del caller
+- Mejorada la fiabilidad en la identificación del punto de llamada real en el código del usuario
+
 ## [2.2.0] - 2025-10-28
 ### Added
 - **Patrón Builder con interfaz fluida**: La función `vd()` ahora retorna un objeto `VersaDumpsBuilder` que permite encadenar métodos de configuración
